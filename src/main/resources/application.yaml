@@ -1,3 +1,29 @@
 spring:
   application:
     name: mini-marqetplace
+  threads:
+    virtual:
+      enabled: true
+  sql:
+    init:
+      mode: always
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/marqetplace_db
+    username: marqetplace
+    password: 1234
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
+jwt:
+  secret:
+    key: "bdd4cbc108856f35b2ce21400764908f7fce0193ad8a807824c2fc2f2dfce2cd"
+  access-token:
+    ttl: 600
+  refresh-token:
+    ttl: 86400
+  issuer: uz.mustafa
