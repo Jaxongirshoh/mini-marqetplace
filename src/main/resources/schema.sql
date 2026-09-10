@@ -30,3 +30,11 @@ CREATE TABLE IF NOT EXISTS order_item (
     quantity INT NOT NULL CHECK (quantity > 0),
     price NUMERIC(10, 2) NOT NULL CHECK (price >= 0)
 );
+
+CREATE TABLE IF NOT EXISTS refresh_token(
+    id BIGSERIAL PRIMARY KEY,
+    token VARCHAR NOT NULL UNIQUE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    expire_at TIMESTAMP WITH TIME ZONE NOT NULL
+)

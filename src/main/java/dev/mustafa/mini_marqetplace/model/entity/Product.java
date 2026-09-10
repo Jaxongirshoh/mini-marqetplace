@@ -15,6 +15,6 @@ public class Product {
     private Integer id;
     private String name;
     private Double price;
-    private Integer stock_quantity;
+    private Integer stockQuantity;
     private Timestamp createdAt;
 }
