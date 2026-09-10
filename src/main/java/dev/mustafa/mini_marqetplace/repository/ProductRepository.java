@@ -17,6 +17,7 @@ public class ProductRepository {
     private static final String FIND_BY_ID_QUERY = "select * from products where id = :id";
     private static final String UPDATE_QUERY = "update products set name = :name,price = :price, stock_quantity = :stock_quantity where id =:id";
     private static final String PRODUCT_PAGABLE_QUERY = "select id, name, price, stock_quantity, created_at from products order by id desc limit :limit offset :offset";
+    private static final String RESTORE_PRODUCT_STOCK_QUERY = "update products set stock_quantity = stock_quantity + :quantity  where id = :id";
 
     public ProductRepository(JdbcClient jdbcClient) {
         this.jdbcClient = jdbcClient;
@@ -66,5 +67,12 @@ public class ProductRepository {
                 .param("offset", offset)
                 .query(Product.class)
                 .list();
+    }
+
+    public void restoreProductStock(Integer productId, Integer quantity) {
+        jdbcClient.sql(RESTORE_PRODUCT_STOCK_QUERY)
+                .param("quantity", quantity)
+                .param("id", productId)
+                .update();
     }
 }

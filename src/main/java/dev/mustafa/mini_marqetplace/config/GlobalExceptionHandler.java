@@ -2,6 +2,7 @@ package dev.mustafa.mini_marqetplace.config;
 
 import dev.mustafa.mini_marqetplace.exception.InvalidRequestException;
 import dev.mustafa.mini_marqetplace.exception.NotFoundException;
+import dev.mustafa.mini_marqetplace.exception.OutOfStockException;
 import dev.mustafa.mini_marqetplace.model.dto.BaseResponse;
 import dev.mustafa.mini_marqetplace.model.dto.ErrorData;
 import jakarta.servlet.http.HttpServletRequest;
@@ -84,7 +85,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<BaseResponse<Void>> handleIllegalArgument(IllegalArgumentException exception) {
-        return error(HttpStatus.BAD_REQUEST, exception.getMessage());
+        return error(HttpStatus.UNPROCESSABLE_CONTENT, exception.getMessage());
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -97,6 +98,12 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception caught by GlobalExceptionHandler: ", exception);
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected server error happened");
     }
+
+    @ExceptionHandler(OutOfStockException.class)
+    public ResponseEntity<BaseResponse<Void>> handleOutOfStock(OutOfStockException ex) {
+        return error(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
 
     private ResponseEntity<BaseResponse<Void>> error(HttpStatus status, String message) {
         if (status.is5xxServerError()) {
