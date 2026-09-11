@@ -15,6 +15,7 @@ import dev.mustafa.mini_marqetplace.repository.OrderItemRepository;
 import dev.mustafa.mini_marqetplace.repository.OrderRepository;
 import dev.mustafa.mini_marqetplace.repository.ProductRepository;
 import dev.mustafa.mini_marqetplace.repository.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,18 +44,19 @@ public class OrderService {
     }
 
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public OrderResponse createOrder(Integer userId, OrderCreateDto orderCreateDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("user with %s id not found".formatted(userId)));
 
         Optional<OrderResponse> byIdempotencyKey = orderRepository.findByIdempotencyKey(orderCreateDto.idempotencyKey());
-        if (byIdempotencyKey.isPresent()){
+        if (byIdempotencyKey.isPresent()) {
             return byIdempotencyKey.get();
         }
 
         List<OrderItemResponse> itemResponses = new ArrayList<>();
 
-        for (var item : orderCreateDto.items()){
+        for (var item : orderCreateDto.items()) {
             Product product = productRepository.findById(item.productId())
                     .orElseThrow(() -> new NotFoundException("product with %s id not found: ".formatted(item.productId())));
 
@@ -91,14 +93,48 @@ public class OrderService {
     }
 
     @Transactional
-    public void confirmOrder(Integer orderId,Integer userId){
-        Order order = getOrderOrThrow(orderId,userId);
-        orderRepository.updateOrderStatus(order.getId(),OrderStatus.CONFIRMED);
+    public void confirmOrder(Integer orderId, Integer userId) {
+        Order order = getOrderOrThrow(orderId, userId);
+
+        if (!OrderStatus.PENDING.equals(order.getStatus())) {
+            throw new InvalidRequestException("only PENDING orders can be updated current status: " + order.getStatus());
+        }
+
+        orderRepository.updateOrderStatus(order.getId(), OrderStatus.CONFIRMED);
     }
 
     @Transactional
+    public OrderResponse getById(Integer orderId, Integer userId) {
+        Order order = getOrderOrThrow(orderId, userId);
+
+        List<OrderItemResponse> orderItems = orderItemRepository.getOrderItems(order.getId()).stream()
+                .map(item -> new OrderItemResponse(
+                                item.getId(),
+                                item.getProductId(),
+                                item.getQuantity(),
+                                item.getPrice()
+                        )
+                ).toList();
+
+        return new OrderResponse(
+                order.getId(),
+                order.getUserId(),
+                order.getStatus(),
+                order.getIdempotencyKey(),
+                order.getCreatedAt().toInstant(),
+                orderItems
+                );
+    }
+
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void cancelOrder(Integer orderId, Integer userId) {
         Order order = getOrderOrThrow(orderId, userId);
+
+        if (!OrderStatus.PENDING.equals(order.getStatus())) {
+            throw new InvalidRequestException("only PENDING orders can be updated current status: " + order.getStatus());
+        }
+
         List<OrderItem> items = orderItemRepository.getOrderItems(order.getId());
         for (OrderItem item : items) {
             productRepository.restoreProductStock(item.getProductId(), item.getQuantity());
@@ -113,10 +149,6 @@ public class OrderService {
 
         if (!order.getUserId().equals(userId)) {
             throw new AccessDeniedException("access denied");
-        }
-
-        if (!OrderStatus.PENDING.equals(order.getStatus())) {
-            throw new InvalidRequestException("only PENDING orders can be updated current status: " + order.getStatus());
         }
 
         return order;

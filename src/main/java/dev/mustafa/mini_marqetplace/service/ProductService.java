@@ -6,6 +6,7 @@ import dev.mustafa.mini_marqetplace.model.dto.ProductDto;
 import dev.mustafa.mini_marqetplace.model.dto.ProductResponseDto;
 import dev.mustafa.mini_marqetplace.model.entity.Product;
 import dev.mustafa.mini_marqetplace.repository.ProductRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
@@ -23,6 +24,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void create(ProductDto productDto) {
         Product product = new Product();
         product.setName(productDto.name());
@@ -33,6 +35,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void update(ProductDto productDto, Integer id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("product with %s id not found".formatted(id)));
@@ -52,6 +55,7 @@ public class ProductService {
         productRepository.update(product);
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponseDto getById(Integer id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("product with %s id not found".formatted(id)));

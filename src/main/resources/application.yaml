@@ -9,7 +9,7 @@ spring:
       mode: always
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/marqetplace_db
+    url: jdbc:postgresql://mini-marqetplace-postgres-1:5432/marqetplace_db
     username: marqetplace
     password: 1234
     driver-class-name: org.postgresql.Driver
@@ -18,6 +18,24 @@ spring:
       minimum-idle: 5
       idle-timeout: 300000
       connection-timeout: 20000
+
+  data:
+    redis:
+      host: redis
+      port: 6380
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+    cache:
+      type: redis
+      redis:
+        time-to-live: 600000
+        cache-null-values: false
 
 jwt:
   secret:

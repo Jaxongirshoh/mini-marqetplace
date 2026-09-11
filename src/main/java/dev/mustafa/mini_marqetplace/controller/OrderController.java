@@ -49,4 +49,14 @@ public class OrderController {
         return ResponseEntity.ok(new BaseResponse<>("cancelled"));
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<BaseResponse<OrderResponse>> getOrderById(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal UserSessionData userSessionData
+    ){
+        OrderResponse response = orderService.getById(id, userSessionData.id());
+        return ResponseEntity.ok(new BaseResponse<>(response));
+    }
+
 }
